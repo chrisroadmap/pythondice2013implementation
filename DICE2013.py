@@ -1,5 +1,5 @@
 import pandas
-import scipy
+import numpy as np
 import pdb
 import pyomo.opt
 import pyomo.environ as pe
@@ -16,64 +16,64 @@ def getPopulationDict(maxPeriods,pop0,popasym,popadj):
 	#create a dictionary of the projected population 
 	population = {}
 	population[1] = pop0
-	for t in xrange(2,int(maxPeriods)+1):
+	for t in range(2,int(maxPeriods)+1):
 		population[t] = population[t-1]*(popasym/population[t-1])**popadj
 	return population
 
 def getGrowthRateOfProductivityDict(ga0,dela,numPeriods,tstep):
 	productivityGR = {} #could do this with scipy arrays to be faster, but this is sufficiently small not to matter
-	for t in xrange(int(numPeriods)):
-		productivityGR[t+1] = ga0 * scipy.exp(-dela*tstep*t)
+	for t in range(int(numPeriods)):
+		productivityGR[t+1] = ga0 * np.exp(-dela*tstep*t)
 	return productivityGR
 	
 def getLevelOfProductivity(a0,ga,numPeriods):
 	productivity = {}
 	productivity[1] = a0
-	for t in xrange(2,int(numPeriods)+1):
+	for t in range(2,int(numPeriods)+1):
 		productivity[t] = productivity[t-1]/(1-ga[t-1])
 	return productivity
 	
 def getCumulativeEfficiencyImprovement(gsigma1,dsig,tstep,numPeriods):
 	efficiency = {}
 	efficiency[1] = gsigma1
-	for t in xrange(2,int(numPeriods)+1):
+	for t in range(2,int(numPeriods)+1):
 		efficiency[t] = efficiency[t-1]*((1+dsig)**tstep)
 	return efficiency
 	
 def getGrowthRate(sig0,gsig,tstep,numPeriods):
 	growthRate = {}
 	growthRate[1] = sig0
-	for t in xrange(2,int(numPeriods)+1):
-		growthRate[t] = growthRate[t-1]*scipy.exp(gsig[t-1]*tstep)
+	for t in range(2,int(numPeriods)+1):
+		growthRate[t] = growthRate[t-1]*np.exp(gsig[t-1]*tstep)
 	return growthRate
 	
 def getBackstopPrice(pback,gback,numPeriods):
 	backstopPrice = {}
-	for t in xrange(int(numPeriods)):
+	for t in range(int(numPeriods)):
 		backstopPrice[t+1] = pback*(1-gback)**t
 	return backstopPrice
 	
 def getAdjustedCostForBackstop(pbacktime,sigma,expcost2,numPeriods):
 	adjCost = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		adjCost[t] = pbacktime[t] * sigma[t] / expcost2 / 1000.
 	return adjCost
 	
 def getEmmissionsFromDeforestation(eland0,deland,numPeriods):
 	emmissions = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		emmissions[t] = eland0 * (1 - deland)**(t-1)
 	return emmissions
 	
 def getAverageUtilitySocialDiscountRate(prstp,tstep,numPeriods):
 	utilDisc = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		utilDisc[t] = 1./((1+prstp)**(tstep*(t-1)))
 	return utilDisc
 	
 def getExogenousForcingOfOtherGreenhouseGases(fex0,fex1,numPeriods):
 	exogForcing = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		if t < 19:
 			exogForcing[t] = fex0 + (1./18.)*(fex1-fex0)*(t-1)
 		else:
@@ -82,7 +82,7 @@ def getExogenousForcingOfOtherGreenhouseGases(fex0,fex1,numPeriods):
 	
 def getFractionOfEmmissionsInControlRegime(periodfullpart,partfractfull,partfract2010,numPeriods):
 	partFract = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		if t <= periodfullpart:
 			partFract[t] = partfract2010 + (partfractfull-partfract2010)*(t-1)/periodfullpart
 		else:
@@ -94,7 +94,7 @@ def getTransientTSCCorrection(c10,c1beta,t2xco2):
 	
 def getCarbonPrice(cprice0,gcprice,tstep,numPeriods):
 	carbonPrice = {}
-	for t in xrange(1,int(numPeriods)+1):
+	for t in range(1,int(numPeriods)+1):
 		carbonPrice[t] = cprice0*(1+gcprice)**(tstep*(t-1))
 	return carbonPrice
 	
@@ -131,35 +131,35 @@ def diceModel2013(**kwargs):
 		if t == 1: 
 			return (kwargs['mat0'],kwargs['mat0'])
 		else:
-			return (10,scipy.inf)
+			return (10,np.inf)
 	
 	def muBounds(model,t):
 		if t == 1: 
 			return (kwargs['mu0'],kwargs['mu0'])
 		else:
-			return (100.,scipy.inf)
+			return (100.,np.inf)
 	
 	def mlBounds(model,t):
 		if t == 1: 
 			return (kwargs['ml0'],kwargs['ml0'])
 		else:
-			return (1000.,scipy.inf)
+			return (1000.,np.inf)
 	
 	def cBounds(model,t):
-		return (2.,scipy.inf)
+		return (2.,np.inf)
 	
 	def kBounds(model,t):
 		if t == 1: 
 			return (kwargs['k0'],kwargs['k0'])
 		else:
-			return (1.,scipy.inf)
+			return (1.,np.inf)
 			
 	def cpcBounds(model,t):
-		return (.01,scipy.inf)
+		return (.01,np.inf)
 		
 	def sBounds(model,t):
 		if t <= kwargs['numPeriods'] - 10:
-			return (-scipy.inf,scipy.inf)
+			return (-np.inf,np.inf)
 		else:
 			return (kwargs['optlrsav'],kwargs['optlrsav'])
 			
@@ -167,7 +167,7 @@ def diceModel2013(**kwargs):
 		if t == 1:
 			return (90,90)
 		else:
-			return (-scipy.inf,kwargs['fosslim'])
+			return (-np.inf,kwargs['fosslim'])
 	
 	model.MIU = pe.Var(model.time_periods,domain=pe.NonNegativeReals,bounds=miuBounds) #Emission control rate GHGs
 	model.FORC = pe.Var(model.time_periods,domain=pe.Reals) #Increase in radiative forcing (watts per m2 from 1900)
@@ -355,16 +355,16 @@ def diceModel2013(**kwargs):
  util..               UTILITY        =E= tstep * scale1 * sum(t,  CEMUTOTPER(t)) + scale2 ;
 
 	"""
-	model.create()
-	solver = pyomo.opt.SolverFactory('ipopt') #options are 'couenne', 'ipopt', and 'bonmin'.  ipopt is continuous and bonmin uses mixed integer
-	results = solver.solve(model, tee=True, keepfiles=False, options="max_iter=2000")
+	#model.create_instance()
+	solver = pe.SolverFactory('ipopt') #options are 'couenne', 'ipopt', and 'bonmin'.  ipopt is continuous and bonmin uses mixed integer
+	# results = solver.solve(model, tee=True, keepfiles=False, options="max_iter=2000")
+	results = solver.solve(model)
 	if (results.solver.status != pyomo.opt.SolverStatus.ok):
 		logging.warning('Check solver not ok?')
 	if (results.solver.termination_condition != pyomo.opt.TerminationCondition.optimal):  
 		logging.warning('Check solver optimality?')
 
-	model.load(results)
-	print 'Optimal solution value:', model.OBJ()
+	print('Optimal solution value:', model.OBJ())
 	return model
 	
 def createRow(variableName,variable,indices):
